@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f6b63">
+<title>PillPulse</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%92%8A%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <header class="top">
+    <div>
+      <h1>Pill<span>Pulse</span></h1>
+      <p class="tag">Your notebook, but it reminds you.</p>
+    </div>
+    <div class="date" id="today-date"></div>
+  </header>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+
+  <!-- TODAY -->
+  <section id="tab-today" class="tab active">
+    <div class="card hero">
+      <div class="hero-main">
+        <div class="big" id="today-count">0 of 0</div>
+        <div class="muted">doses taken today</div>
+      </div>
+      <div class="hero-side">
+        <div class="muted">Last 7 days</div>
+        <div class="big small" id="week-pct">–</div>
+      </div>
+    </div>
+    <div id="missed-banner" class="banner" hidden></div>
+    <div id="next-dose" class="next" hidden></div>
+    <div id="dose-list"></div>
+    <div class="week" id="week-strip" aria-label="Last seven days"></div>
+    <div class="empty" id="empty-today" hidden>
+      <p>No medicines yet.</p>
+      <button class="primary" data-go="meds">Add from my notebook</button>
+      <button class="ghost" id="load-demo-1">Load demo data</button>
+    </div>
+  </section>
+
+  <!-- MEDS -->
+  <section id="tab-meds" class="tab">
+    <div class="card">
+      <h2>Type it like in your notebook</h2>
+      <p class="muted">One medicine per line. Write times however you normally do.</p>
+      <textarea id="notebook" rows="6" spellcheck="false" placeholder="Metformin 500 mg 8:00 20:00&#10;Aspirin 75 mg morning&#10;Lisinopril 10 mg at 9am and 9pm&#10;Vitamin D 1000 IU evening"></textarea>
+      <button class="primary" id="parse-btn">Read my notebook</button>
+      <div id="preview" hidden>
+        <h3>Check before adding</h3>
+        <p class="muted small">Fix anything that looks wrong. Times are 24-hour, separated by commas.</p>
+        <div id="preview-rows"></div>
+        <button class="primary" id="add-all">Add to my list</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>My medicines</h2>
+      <div id="med-list"></div>
+    </div>
+  </section>
+
+  <!-- PULSE -->
+  <section id="tab-pulse" class="tab">
+    <div class="card center">
+      <div class="bpm"><span class="heart" id="heart">&#9829;</span> <span id="bpm">--</span> <small>bpm</small></div>
+      <div class="status" id="pulse-status">Cover the back camera and flash with your fingertip</div>
+      <canvas id="wave" width="600" height="200" aria-label="Pulse signal"></canvas>
+      <div class="bar"><div id="prog"></div></div>
+      <button class="primary" id="pulse-start">Measure my pulse (30 s)</button>
+      <button class="ghost" id="pulse-demo">Demo signal (no camera)</button>
+      <ol class="how">
+        <li>Sit still and breathe normally.</li>
+        <li>Cover the back camera <b>and</b> flash with your fingertip. Light pressure.</li>
+        <li>Stay still for 30 seconds.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>Pulse history</h2>
+      <canvas id="hist-chart" width="600" height="160" aria-label="Pulse history chart"></canvas>
+      <div id="pulse-history"></div>
+    </div>
+    <div class="card">
+      <h3>How it works</h3>
+      <p class="muted small">Each heartbeat changes how much blood is in your fingertip, which slightly changes how much red light passes through. The camera sees that flicker (photoplethysmography, the same idea as a smartwatch). The app filters the signal, finds the peaks and turns the gap between them into beats per minute.</p>
+    </div>
+  </section>
+
+  <!-- FAMILY -->
+  <section id="tab-family" class="tab">
+    <div class="card">
+      <h2>Who is this for?</h2>
+      <label>Patient name<input id="patient-name" type="text" placeholder="e.g. Grandma Nodira"></label>
+      <label>Family member's name<input id="caregiver-name" type="text" placeholder="e.g. Yodgora"></label>
+    </div>
+
+    <div class="card">
+      <h2>Tell my family</h2>
+      <p class="muted">Sends today's summary through the app they already use. No account needed.</p>
+      <pre id="summary" class="summary"></pre>
+      <div class="row">
+        <a class="btn primary" id="share-wa" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn primary alt" id="share-tg" target="_blank" rel="noopener">Telegram</a>
+      </div>
+      <button class="ghost" id="share-native">Share&hellip;</button>
+      <button class="ghost" id="share-copy">Copy text</button>
+    </div>
+
+    <div class="card">
+      <h2>Reminders that work when the app is closed</h2>
+      <p class="muted">Download a calendar file and open it on the phone. Every dose becomes a daily alarm in the phone's own calendar.</p>
+      <button class="primary" id="ics-btn">Download phone reminders (.ics)</button>
+      <button class="ghost" id="notif-btn">Also allow alerts while this page is open</button>
+    </div>
+
+    <div class="card">
+      <h2>Doctor report</h2>
+      <p class="muted">One page with the last 7 days of doses and pulse readings. Print it or save as PDF.</p>
+      <button class="primary" id="report-btn">Create report</button>
+    </div>
+
+    <div class="card">
+      <h2>Comfort</h2>
+      <label class="switch"><input type="checkbox" id="opt-large"> Extra large text</label>
+      <label class="switch"><input type="checkbox" id="opt-speak"> Read reminders aloud</label>
+    </div>
+
+    <div class="card">
+      <h3>Demo &amp; data</h3>
+      <button class="ghost" id="load-demo-2">Load demo data (for the video)</button>
+      <button class="ghost danger" id="reset-btn">Erase everything on this device</button>
+      <p class="muted small">All data stays in this browser. Nothing is sent to a server.</p>
+    </div>
+
+    <p class="disc">PillPulse is a student project. It is not a medical device and does not give medical advice. Always follow your doctor's instructions.</p>
+  </section>
+
+  <div id="report" class="report" hidden></div>
+</div>
+
+<nav class="nav" id="nav">
+  <button data-go="today" class="on"><i>&#128138;</i>Today</button>
+  <button data-go="meds"><i>&#128211;</i>Medicines</button>
+  <button data-go="pulse"><i>&#9829;</i>Pulse</button>
+  <button data-go="family"><i>&#128106;</i>Family</button>
+</nav>
+
+<video id="video" playsinline muted style="display:none"></video>
+<canvas id="grab" width="32" height="24" style="display:none"></canvas>
+
+<script src="parser.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
